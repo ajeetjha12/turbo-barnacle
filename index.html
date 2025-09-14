@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hamara Baat ❤️</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #ee1f1f, #29e4b8);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      color: rgb(157, 107, 33);
+    }
+    .msg {
+      background: #fff;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 70%;
+    }
+    .me { background: #d1ffd1; margin-left: auto; }
+    #input-area {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+    }
+    #message {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      margin-left: 8px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      background: #b9442f;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #bc2447;
+    }
+
+  .me {
+  background: #d1ffd1;
+  margin-left: auto;
+  margin-right: 10px;
+  text-align: right;
+  padding: 8px 12px;
+  border-radius: 15px;
+  max-width: 60%;
+}
+
+.other {
+  background: #fff;
+  margin-right: auto;
+  margin-left: 10px;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 15px;
+  max-width: 60%;
+}
+
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;color:rgb(61, 190, 195);padding:10px; font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;">💬 Hamara Baat ❤️</h2>
+  <div id="chat-box"></div>
+
+  <div id="input-area">
+    <input type="text" id="message" placeholder="Type a message... 😊" />
+    <button onclick="sendMessage()">Send</button>
+    <input type="file" id="fileInput" hidden />
+    <button onclick="document.getElementById('fileInput').click()">📷</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAT44RNNeUfQ_DdECExxF4LckmeYZD0zs",
+      authDomain: "hamara-baat.firebaseapp.com",
+      projectId: "hamara-baat",
+      storageBucket: "hamara-baat.firebasestorage.app",
+      messagingSenderId: "615738265355",
+      appId: "1:615738265355:web:a2004a0cf26991d9e3dc0e",
+      measurementId: "G-RZHBYNFVJW"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
+    const username = prompt("Enter your name (e.g. Me / GF):") || "Guest";
+
+    const chatBox = document.getElementById("chat-box");
+    const messageInput = document.getElementById("message");
+    const fileInput = document.getElementById("fileInput");
+
+    // Send text message
+    window.sendMessage = function() {
+      const msg = messageInput.value.trim();
+      if (msg === "") return;
+      push(ref(db, "messages"), {
+        text: msg,
+        sender: "User name",
+        time: Date.now()
+      });
+      messageInput.value = "";
+    }; messageInput.addEventListener("keypress", function (e) {
+  if (e.key === "Enter") {
+    sendMessage();
+  }
+});
+
+    // Send image
+    fileInput.addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const storageRef = sRef(storage, "images/" + Date.now() + "-" + file.name);
+      uploadBytes(storageRef, file).then(snapshot => {
+        getDownloadURL(snapshot.ref).then(url => {
+          push(ref(db, "messages"), {
+            image: url,
+            sender: "Me",
+            time: Date.now()
+          });
+        });
+      });
+    });
+
+    // Listen for new messages
+    onChildAdded(ref(db, "messages"), (data) => {
+  const msg = data.val();
+  const div = document.createElement("div");
+
+  // text content
+  div.textContent = msg.sender + ": " + msg.text;
+
+  // WhatsApp style alignment
+  if (msg.sender === username) {
+    div.classList.add("me");      // right side
+  } else {
+    div.classList.add("other");   // left side
+  }
+
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight; // auto scroll
+});
+  </script>
+</body>
+</html>
